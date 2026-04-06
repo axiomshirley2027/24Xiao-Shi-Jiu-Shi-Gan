@@ -31,22 +31,36 @@ async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export default function Setup() {
-  const { setGoal } = useGoalCtx();
+  const { state, setGoal, updateGoal } = useGoalCtx();
   const { lang, toggle, t } = useLangCtx();
-  const [goal, setGoalInput] = useState("");
-  const [stake, setStake] = useState("");
-  const [estimatedHours, setEstimatedHours] = useState<string>("");
-  const [reminderTimes, setReminderTimes] = useState<string[]>(["09:00"]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [notifStatus, setNotifStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
+  const isEditing = state.status === 'editing';
 
   const today = new Date();
   const defaultDate = new Date(today);
   defaultDate.setDate(defaultDate.getDate() + 7);
   const formatDateForInput = (d: Date) => d.toISOString().slice(0, 16);
 
-  const [deadline, setDeadline] = useState(formatDateForInput(defaultDate));
+  const [goal, setGoalInput] = useState(isEditing && state.goal ? state.goal : "");
+  const [stake, setStake] = useState(isEditing && state.stake ? state.stake : "");
+  const [estimatedHours, setEstimatedHours] = useState<string>(
+    isEditing && state.estimatedHours ? String(state.estimatedHours) : ""
+  );
+  const [reminderTimes, setReminderTimes] = useState<string[]>(
+    isEditing && state.reminderTimes?.length ? state.reminderTimes : ["09:00"]
+  );
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    isEditing && (state.reminderTimes?.length ?? 0) > 0 && Notification.permission === 'granted'
+  );
+  const [showAdvanced, setShowAdvanced] = useState(isEditing && !!(state.stake || (state.reminderTimes?.length ?? 0) > 0));
+  const [notifStatus, setNotifStatus] = useState<'idle' | 'granted' | 'denied'>(
+    Notification.permission === 'granted' ? 'granted' : Notification.permission === 'denied' ? 'denied' : 'idle'
+  );
+
+  const [deadline, setDeadline] = useState(
+    isEditing && state.deadline
+      ? formatDateForInput(new Date(state.deadline))
+      : formatDateForInput(defaultDate)
+  );
 
   const placeholders = lang === 'zh' ? FUNNY_PLACEHOLDERS_ZH : FUNNY_PLACEHOLDERS_EN;
   const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)];
@@ -63,11 +77,16 @@ export default function Setup() {
     const deadlineTs = new Date(deadline).getTime();
     if (deadlineTs <= Date.now()) return;
     const estH = estimatedHours ? parseFloat(estimatedHours) : undefined;
-    setGoal(goal.trim(), deadlineTs, {
+    const opts = {
       stake: stake.trim() || undefined,
       reminderTimes: notificationsEnabled ? reminderTimes.filter(Boolean) : undefined,
       estimatedHours: estH && estH > 0 ? estH : undefined,
-    });
+    };
+    if (isEditing) {
+      updateGoal(goal.trim(), deadlineTs, opts);
+    } else {
+      setGoal(goal.trim(), deadlineTs, opts);
+    }
   };
 
   const isValid = goal.trim() && deadline && new Date(deadline).getTime() > Date.now();
@@ -107,7 +126,7 @@ export default function Setup() {
           </motion.div>
 
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
-            {t("24 Hours. Just Do It.", "24小时就是干！")}
+            {isEditing ? t("Update Your Mission", "修改任务设置") : t("24 Hours. Just Do It.", "24小时就是干！")}
           </h1>
 
           <p className="text-lg text-muted-foreground font-bold">
@@ -323,17 +342,33 @@ export default function Setup() {
               >
                 {!goal.trim()
                   ? t("Type your goal above first...", "先在上面输入你的目标...")
-                  : t("Let's GO!", "开战！")}
+                  : isEditing
+                    ? t("Save changes", "保存修改")
+                    : t("Let's GO!", "开战！")}
               </Button>
             </motion.div>
           </form>
 
-          <p className="text-center text-xs text-muted-foreground/60 font-medium">
-            {t(
-              "Your progress is saved locally. No accounts, no drama.",
-              "进度保存在本地。无需账号，无需麻烦。"
-            )}
-          </p>
+          {isEditing ? (
+            <button
+              type="button"
+              onClick={() => updateGoal(state.goal!, state.deadline!, {
+                stake: state.stake ?? undefined,
+                reminderTimes: state.reminderTimes,
+                estimatedHours: state.estimatedHours ?? undefined,
+              })}
+              className="w-full text-center text-sm font-bold text-muted-foreground/60 hover:text-muted-foreground transition-colors py-1"
+            >
+              ← {t("Cancel — go back to mission", "取消，回到任务")}
+            </button>
+          ) : (
+            <p className="text-center text-xs text-muted-foreground/60 font-medium">
+              {t(
+                "Your progress is saved locally. No accounts, no drama.",
+                "进度保存在本地。无需账号，无需麻烦。"
+              )}
+            </p>
+          )}
         </motion.div>
 
         <motion.p

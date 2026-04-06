@@ -23,12 +23,14 @@ export interface GoalState {
   reminderTimes: string[];
   pomodoroCount: number;
   estimatedHours: number | null;
-  status: 'none' | 'active' | 'completed' | 'abandoned';
+  status: 'none' | 'active' | 'editing' | 'completed' | 'abandoned';
 }
 
 export interface GoalCtxValue {
   state: GoalState;
   setGoal: (goal: string, deadline: number, opts?: { stake?: string; reminderTimes?: string[]; estimatedHours?: number }) => void;
+  updateGoal: (goal: string, deadline: number, opts?: { stake?: string; reminderTimes?: string[]; estimatedHours?: number }) => void;
+  editGoal: () => void;
   addLog: (note: string) => void;
   addCheckin: (date: string, hours: number, note?: string) => void;
   addDistraction: () => void;
@@ -56,6 +58,8 @@ const defaultState: GoalState = {
 export const GoalContext = createContext<GoalCtxValue>({
   state: defaultState,
   setGoal: () => {},
+  updateGoal: () => {},
+  editGoal: () => {},
   addLog: () => {},
   addCheckin: () => {},
   addDistraction: () => {},
@@ -149,9 +153,25 @@ export function useGoal(): GoalCtxValue {
     setState((prev) => ({ ...prev, status: abandoned ? 'abandoned' : 'completed' }));
   }, []);
 
+  const editGoal = useCallback(() => {
+    setState((prev) => ({ ...prev, status: 'editing' }));
+  }, []);
+
+  const updateGoal = useCallback((goal: string, deadline: number, opts?: { stake?: string; reminderTimes?: string[]; estimatedHours?: number }) => {
+    setState((prev) => ({
+      ...prev,
+      goal,
+      deadline,
+      stake: opts?.stake ?? null,
+      reminderTimes: opts?.reminderTimes ?? [],
+      estimatedHours: opts?.estimatedHours ?? null,
+      status: 'active',
+    }));
+  }, []);
+
   const resetGoal = useCallback(() => {
     setState(defaultState);
   }, []);
 
-  return { state, setGoal, addLog, addCheckin, addDistraction, incrementPomodoro, completeGoal, resetGoal };
+  return { state, setGoal, updateGoal, editGoal, addLog, addCheckin, addDistraction, incrementPomodoro, completeGoal, resetGoal };
 }

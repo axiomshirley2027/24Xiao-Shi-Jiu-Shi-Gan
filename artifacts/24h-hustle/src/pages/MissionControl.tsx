@@ -310,7 +310,7 @@ function PomodoroTimer({ onComplete, t }: {
 
 /* ─── Main component ─────────────────────────────────────────────────────── */
 export default function MissionControl() {
-  const { state, addLog, addCheckin, addDistraction, incrementPomodoro, completeGoal, resetGoal } = useGoalCtx();
+  const { state, addLog, addCheckin, addDistraction, incrementPomodoro, completeGoal, resetGoal, editGoal } = useGoalCtx();
   const { lang, toggle, t } = useLangCtx();
   const { days, hours, minutes, seconds, progressPercent, isLowTime, isExpired } = useCountdown(state.startTime, state.deadline);
 
@@ -458,14 +458,14 @@ export default function MissionControl() {
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-white rounded-3xl border border-border/60 shadow-xl">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-xl font-black">{t("Go back and edit?", "返回修改目标？")}</AlertDialogTitle>
+                  <AlertDialogTitle className="text-xl font-black">{t("Edit goal settings?", "修改目标设置？")}</AlertDialogTitle>
                   <AlertDialogDescription className="text-base text-muted-foreground font-medium">
-                    {t("This will reset your timer and check-ins. Sure?", "这将重置你的计时器和打卡记录。确定吗？")}
+                    {t("Your check-ins, logs and streak are kept. Only the goal, deadline and hours estimate will change.", "打卡记录、日志和连击数会保留，只更新目标文字、截止时间和预估小时。")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="gap-2">
                   <AlertDialogCancel className="rounded-2xl font-bold">{t("Never mind", "算了")}</AlertDialogCancel>
-                  <AlertDialogAction onClick={resetGoal} className="bg-primary font-bold rounded-2xl">{t("Yes, fix it", "是，去修改")}</AlertDialogAction>
+                  <AlertDialogAction onClick={editGoal} className="bg-primary font-bold rounded-2xl">{t("Yes, edit it", "是，去修改")}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

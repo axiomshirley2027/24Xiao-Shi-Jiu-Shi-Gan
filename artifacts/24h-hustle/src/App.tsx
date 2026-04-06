@@ -16,7 +16,7 @@ function App() {
       <LangContext.Provider value={langUtils}>
         <div className="min-h-screen w-full bg-background text-foreground overflow-hidden selection:bg-primary/20">
           <AnimatePresence mode="wait">
-            {state.status === 'none' && (
+            {(state.status === 'none' || state.status === 'editing') && (
               <motion.div
                 key="setup"
                 initial={{ opacity: 0, y: 16 }}
