@@ -1,7 +1,7 @@
 import { useGoalCtx, calcStreak } from "@/hooks/useGoal";
 import { useLangCtx } from "@/context/LangContext";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, PartyPopper, HeartCrack, Flame, Clock, CalendarCheck } from "lucide-react";
+import { RotateCcw, PartyPopper, HeartCrack, Flame, Clock, CalendarCheck, MousePointerClick, Timer } from "lucide-react";
 import { motion } from "framer-motion";
 
 function formatDuration(ms: number, lang: string) {
@@ -140,6 +140,16 @@ export default function Completion() {
               <span className="font-black text-foreground">
                 {state.logs.length} {t(state.logs.length === 1 ? "entry" : "entries", "条")}
               </span>
+            </div>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><MousePointerClick className="w-4 h-4" />{t("Distractions", "分心次数")}</span>
+              <span className={`font-black ${state.distractionCount > 20 ? 'text-red-500' : state.distractionCount > 5 ? 'text-orange-500' : 'text-foreground'}`}>
+                {state.distractionCount}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-muted-foreground font-semibold flex items-center gap-1.5"><Timer className="w-4 h-4" />{t("Pomodoros", "番茄钟")}</span>
+              <span className="font-black text-foreground">{state.pomodoroCount} 🍅</span>
             </div>
           </div>
 

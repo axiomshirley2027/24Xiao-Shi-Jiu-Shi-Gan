@@ -7,8 +7,8 @@ export interface ProgressLog {
 }
 
 export interface DailyCheckin {
-  date: string;    // "YYYY-MM-DD"
-  hours: number;   // self-reported hours spent
+  date: string;
+  hours: number;
   note?: string;
 }
 
@@ -18,14 +18,20 @@ export interface GoalState {
   startTime: number | null;
   logs: ProgressLog[];
   checkins: DailyCheckin[];
+  stake: string | null;
+  distractionCount: number;
+  reminderTime: string | null;
+  pomodoroCount: number;
   status: 'none' | 'active' | 'completed' | 'abandoned';
 }
 
 export interface GoalCtxValue {
   state: GoalState;
-  setGoal: (goal: string, deadline: number) => void;
+  setGoal: (goal: string, deadline: number, opts?: { stake?: string; reminderTime?: string }) => void;
   addLog: (note: string) => void;
   addCheckin: (date: string, hours: number, note?: string) => void;
+  addDistraction: () => void;
+  incrementPomodoro: () => void;
   completeGoal: (abandoned?: boolean) => void;
   resetGoal: () => void;
 }
@@ -38,6 +44,10 @@ const defaultState: GoalState = {
   startTime: null,
   logs: [],
   checkins: [],
+  stake: null,
+  distractionCount: 0,
+  reminderTime: null,
+  pomodoroCount: 0,
   status: 'none',
 };
 
@@ -46,6 +56,8 @@ export const GoalContext = createContext<GoalCtxValue>({
   setGoal: () => {},
   addLog: () => {},
   addCheckin: () => {},
+  addDistraction: () => {},
+  incrementPomodoro: () => {},
   completeGoal: () => {},
   resetGoal: () => {},
 });
@@ -86,7 +98,7 @@ export function useGoal(): GoalCtxValue {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return { checkins: [], ...parsed };
+        return { ...defaultState, ...parsed };
       }
     } catch {}
     return defaultState;
@@ -96,13 +108,14 @@ export function useGoal(): GoalCtxValue {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
   }, [state]);
 
-  const setGoal = useCallback((goal: string, deadline: number) => {
+  const setGoal = useCallback((goal: string, deadline: number, opts?: { stake?: string; reminderTime?: string }) => {
     setState({
+      ...defaultState,
       goal,
       deadline,
       startTime: Date.now(),
-      logs: [],
-      checkins: [],
+      stake: opts?.stake ?? null,
+      reminderTime: opts?.reminderTime ?? null,
       status: 'active',
     });
   }, []);
@@ -121,6 +134,14 @@ export function useGoal(): GoalCtxValue {
     });
   }, []);
 
+  const addDistraction = useCallback(() => {
+    setState((prev) => ({ ...prev, distractionCount: prev.distractionCount + 1 }));
+  }, []);
+
+  const incrementPomodoro = useCallback(() => {
+    setState((prev) => ({ ...prev, pomodoroCount: prev.pomodoroCount + 1 }));
+  }, []);
+
   const completeGoal = useCallback((abandoned = false) => {
     setState((prev) => ({ ...prev, status: abandoned ? 'abandoned' : 'completed' }));
   }, []);
@@ -129,5 +150,5 @@ export function useGoal(): GoalCtxValue {
     setState(defaultState);
   }, []);
 
-  return { state, setGoal, addLog, addCheckin, completeGoal, resetGoal };
+  return { state, setGoal, addLog, addCheckin, addDistraction, incrementPomodoro, completeGoal, resetGoal };
 }
