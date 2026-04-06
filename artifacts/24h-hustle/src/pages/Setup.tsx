@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket, CalendarDays, Languages, ChevronDown, ShieldAlert, Bell, Plus, X, Clock } from "lucide-react";
+import { LegalFooter } from "@/components/LegalModal";
 
 const FUNNY_PLACEHOLDERS_EN = [
   "Write a novel (no, seriously, this time)",
@@ -382,6 +383,10 @@ export default function Setup() {
             "副作用包括：把事情做完、对自己感觉良好，以及轻微咖啡因成瘾。"
           )}
         </motion.p>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+          <LegalFooter />
+        </motion.div>
       </div>
     </div>
   );

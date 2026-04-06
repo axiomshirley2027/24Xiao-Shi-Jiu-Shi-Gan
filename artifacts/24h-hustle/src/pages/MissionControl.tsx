@@ -14,6 +14,7 @@ import {
   AlertTriangle, CalendarCheck, Pencil, MousePointerClick, Share2, X,
   Play, Pause, RotateCcw, Timer
 } from "lucide-react";
+import { LegalFooter } from "@/components/LegalModal";
 
 /* ─── Quotes ─────────────────────────────────────────────────────────────── */
 const QUOTES_EN = [
@@ -702,6 +703,8 @@ export default function MissionControl() {
             </motion.form>
           )}
         </div>
+
+        <LegalFooter />
       </main>
 
       {/* Fixed footer — abandon */}
