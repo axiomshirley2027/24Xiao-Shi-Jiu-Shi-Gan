@@ -230,8 +230,7 @@ export default function Setup() {
                               next[i] = e.target.value;
                               setReminderTimes(next);
                             }}
-                            disabled={!notificationsEnabled}
-                            className="flex-1 bg-white border-2 border-blue-200 focus:border-blue-400 rounded-xl px-3 py-2 font-bold text-foreground outline-none [color-scheme:light] cursor-pointer disabled:opacity-50"
+                            className="flex-1 bg-white border-2 border-blue-200 focus:border-blue-400 rounded-xl px-3 py-2 font-bold text-foreground outline-none [color-scheme:light] cursor-pointer"
                           />
                           {reminderTimes.length > 1 && (
                             <button
@@ -249,7 +248,7 @@ export default function Setup() {
                     <button
                       type="button"
                       onClick={() => setReminderTimes([...reminderTimes, "12:00"])}
-                      disabled={!notificationsEnabled || reminderTimes.length >= 6}
+                      disabled={reminderTimes.length >= 6}
                       className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
