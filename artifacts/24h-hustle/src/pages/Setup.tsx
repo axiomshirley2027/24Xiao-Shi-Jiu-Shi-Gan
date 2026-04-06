@@ -145,14 +145,16 @@ export default function Setup() {
               </div>
             </div>
 
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+            <motion.div whileHover={isValid ? { scale: 1.02 } : {}} whileTap={isValid ? { scale: 0.97 } : {}}>
               <Button
                 type="submit"
                 disabled={!isValid}
-                className="w-full h-auto py-5 text-xl font-black rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:shadow-none"
+                className="w-full h-auto py-5 text-xl font-black rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed"
                 data-testid="button-start"
               >
-                {t("Let's GO!", "开战！")}
+                {!goal.trim()
+                  ? t("Type your goal above first...", "先在上面输入你的目标...")
+                  : t("Let's GO!", "开战！")}
               </Button>
             </motion.div>
           </form>
