@@ -91,7 +91,7 @@ function PrivacyContent({ lang }: { lang: string }) {
       </section>
       <section className="space-y-1">
         <h3 className="font-black text-foreground">联系我们</h3>
-        <p>如有隐私相关问题，欢迎通过应用内反馈联系我们。</p>
+        <p>如有隐私相关问题，欢迎发送邮件至 <a href="mailto:axiomshirley2027@gmail.com" className="text-primary underline underline-offset-2">axiomshirley2027@gmail.com</a></p>
       </section>
     </div>
   );
@@ -121,7 +121,7 @@ function PrivacyContent({ lang }: { lang: string }) {
       </section>
       <section className="space-y-1">
         <h3 className="font-black text-foreground">Contact</h3>
-        <p>For any privacy questions, please reach out via the app's feedback channel.</p>
+        <p>For any privacy questions, email us at <a href="mailto:axiomshirley2027@gmail.com" className="text-primary underline underline-offset-2">axiomshirley2027@gmail.com</a></p>
       </section>
     </div>
   );
@@ -165,6 +165,15 @@ export function LegalFooter() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      <span className="text-muted-foreground/30">·</span>
+
+      <a
+        href="mailto:axiomshirley2027@gmail.com"
+        className="hover:text-muted-foreground transition-colors underline underline-offset-2"
+      >
+        {t("Feedback", "反馈")}
+      </a>
 
       <span className="text-muted-foreground/30">·</span>
 

@@ -53,6 +53,12 @@ No data is ever sent to a server. Everything is stored in your browser's `localS
 
 ---
 
+## Feedback
+
+Found a bug or have a suggestion? Email [axiomshirley2027@gmail.com](mailto:axiomshirley2027@gmail.com)
+
+---
+
 ## License
 
 MIT — free to use, fork, and build on.
