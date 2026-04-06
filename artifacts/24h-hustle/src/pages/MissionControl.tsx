@@ -114,7 +114,7 @@ function CheckinForm({ defaultHours, onSubmit, onCancel, t }: CheckinFormProps) 
           <input
             type="range"
             min={0}
-            max={18}
+            max={24}
             step={0.5}
             value={hours}
             onChange={(e) => setHours(Number(e.target.value))}
@@ -127,7 +127,7 @@ function CheckinForm({ defaultHours, onSubmit, onCancel, t }: CheckinFormProps) 
         <div className="flex justify-between text-[10px] text-muted-foreground/60 px-0.5">
           <span>0h</span>
           <span className="text-primary font-bold">12h target</span>
-          <span>18h</span>
+          <span>24h</span>
         </div>
       </div>
 
