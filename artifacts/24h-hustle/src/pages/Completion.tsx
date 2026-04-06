@@ -1,7 +1,7 @@
-import { useGoalCtx } from "@/hooks/useGoal";
+import { useGoalCtx, calcStreak } from "@/hooks/useGoal";
 import { useLangCtx } from "@/context/LangContext";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, PartyPopper, HeartCrack } from "lucide-react";
+import { RotateCcw, PartyPopper, HeartCrack, Flame, Clock, CalendarCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 function formatDuration(ms: number, lang: string) {
@@ -28,14 +28,18 @@ export default function Completion() {
     ? formatDuration(state.deadline - state.startTime, lang)
     : '-';
 
+  const streak = calcStreak(state.checkins);
+  const totalHours = state.checkins.reduce((sum, c) => sum + c.hours, 0);
+  const daysHit = state.checkins.filter((c) => c.hours >= 12).length;
+  const totalDays = state.checkins.length;
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative">
 
-      {/* Blobs */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none -translate-y-1/3 translate-x-1/3" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl pointer-events-none translate-y-1/3 -translate-x-1/4" />
 
-      <div className="w-full max-w-lg relative z-10 space-y-8">
+      <div className="w-full max-w-lg relative z-10 space-y-6">
 
         {/* Icon + headline */}
         <motion.div
@@ -61,7 +65,7 @@ export default function Completion() {
           <h1 className="text-4xl md:text-5xl font-black text-foreground">
             {isAbandoned
               ? t("You quit. That's okay.", "你放弃了。没关系。")
-              : t("Time's up! How'd it go?", "时间到！结果怎么样？")
+              : t("Mission Complete!", "任务完成！")
             }
           </h1>
 
@@ -79,7 +83,39 @@ export default function Completion() {
           </p>
         </motion.div>
 
-        {/* Summary card */}
+        {/* Check-in summary stats */}
+        {state.checkins.length > 0 && (
+          <motion.div
+            className="grid grid-cols-3 gap-3"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <div className="bg-white rounded-2xl border border-border/50 shadow-sm p-4 flex flex-col items-center gap-1">
+              <Flame className={`w-6 h-6 ${streak > 0 ? 'text-orange-500' : 'text-muted-foreground/40'}`} />
+              <span className="text-2xl font-black text-foreground">{streak}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-center">
+                {t("Final Streak", "最终连续")}
+              </span>
+            </div>
+            <div className="bg-white rounded-2xl border border-border/50 shadow-sm p-4 flex flex-col items-center gap-1">
+              <Clock className="w-6 h-6 text-primary" />
+              <span className="text-2xl font-black text-foreground">{totalHours}h</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-center">
+                {t("Total Hours", "累计工时")}
+              </span>
+            </div>
+            <div className="bg-white rounded-2xl border border-border/50 shadow-sm p-4 flex flex-col items-center gap-1">
+              <CalendarCheck className="w-6 h-6 text-green-500" />
+              <span className="text-2xl font-black text-foreground">{daysHit}/{totalDays}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-center">
+                {t("Days ≥12h", "达标天数")}
+              </span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Mission report card */}
         <motion.div
           className="bg-white rounded-3xl border border-border/50 shadow-sm p-6 space-y-5"
           initial={{ opacity: 0, y: 16 }}
@@ -90,13 +126,13 @@ export default function Completion() {
             {t("Mission Report", "任务总结")}
           </h3>
 
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between items-center py-3 border-b border-border/40">
+          <div className="space-y-0 text-sm divide-y divide-border/40">
+            <div className="flex justify-between items-center py-3">
               <span className="text-muted-foreground font-semibold">{t("Goal", "目标")}</span>
               <span className="font-black text-foreground text-right max-w-[60%] break-words">{state.goal}</span>
             </div>
-            <div className="flex justify-between items-center py-3 border-b border-border/40">
-              <span className="text-muted-foreground font-semibold">{t("Total time given", "给予的总时间")}</span>
+            <div className="flex justify-between items-center py-3">
+              <span className="text-muted-foreground font-semibold">{t("Time window", "任务时长")}</span>
               <span className="font-black text-foreground font-mono">{duration}</span>
             </div>
             <div className="flex justify-between items-center py-3">
@@ -107,12 +143,46 @@ export default function Completion() {
             </div>
           </div>
 
+          {/* Check-in history */}
+          {state.checkins.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {t("Daily check-ins", "每日打卡记录")}
+              </p>
+              <div className="space-y-1.5 max-h-44 overflow-y-auto">
+                {[...state.checkins]
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((c) => (
+                  <div
+                    key={c.date}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2 border text-sm ${
+                      c.hours >= 12
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-red-50 border-red-200'
+                    }`}
+                  >
+                    <span className={`font-mono text-xs font-bold ${c.hours >= 12 ? 'text-green-700' : 'text-red-600'}`}>
+                      {c.date}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {c.note && <span className="text-xs text-muted-foreground truncate max-w-[120px]">{c.note}</span>}
+                      <span className={`font-black text-sm ${c.hours >= 12 ? 'text-green-700' : 'text-red-600'}`}>
+                        {c.hours}h {c.hours >= 12 ? '✓' : '✗'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Progress log entries */}
           {state.logs.length > 0 && (
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2 pt-1">
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {t("What you got done:", "你完成了什么：")}
               </p>
-              <div className="space-y-2 max-h-52 overflow-y-auto">
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {state.logs.map((log) => (
                   <div key={log.id} className="bg-background rounded-xl p-3 border border-border/40">
                     <span className="text-xs text-muted-foreground font-mono mr-2">

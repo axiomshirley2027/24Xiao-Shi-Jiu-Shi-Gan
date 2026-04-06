@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useGoalCtx } from "@/hooks/useGoal";
+import { useGoalCtx, getDateStr, calcStreak } from "@/hooks/useGoal";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useLangCtx } from "@/context/LangContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, Plus, CheckCircle2, Flag, Zap, Languages } from "lucide-react";
+import { Target, Plus, CheckCircle2, Flag, Zap, Languages, Flame, Clock, AlertTriangle, CalendarCheck } from "lucide-react";
 
 const QUOTES_EN = [
   "Your couch is not going anywhere. The deadline is.",
@@ -82,8 +82,79 @@ function CountdownBlock({ value, label, isLow }: { value: number; label: string;
   );
 }
 
+interface CheckinFormProps {
+  defaultHours?: number;
+  onSubmit: (hours: number, note: string) => void;
+  onCancel?: () => void;
+  t: (en: string, zh: string) => string;
+}
+
+function CheckinForm({ defaultHours, onSubmit, onCancel, t }: CheckinFormProps) {
+  const [hours, setHours] = useState(defaultHours ?? 12);
+  const [note, setNote] = useState("");
+
+  const handle = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(hours, note.trim());
+  };
+
+  return (
+    <motion.form
+      onSubmit={handle}
+      className="space-y-3 pt-2"
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+    >
+      <div className="space-y-1">
+        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {t("Hours spent today", "今天花了多少小时")}
+        </label>
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={18}
+            step={0.5}
+            value={hours}
+            onChange={(e) => setHours(Number(e.target.value))}
+            className="flex-1 accent-primary h-2 cursor-pointer"
+          />
+          <span className="font-black text-foreground text-lg w-14 text-right tabular-nums">
+            {hours}h
+          </span>
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground/60 px-0.5">
+          <span>0h</span>
+          <span className="text-primary font-bold">12h target</span>
+          <span>18h</span>
+        </div>
+      </div>
+
+      <Input
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={t("What did you work on? (optional)", "今天做了什么？（可选）")}
+        className="bg-white border-2 border-border/60 focus-visible:border-primary rounded-xl font-medium"
+      />
+
+      <div className="flex gap-2">
+        <Button type="submit" className="flex-1 font-bold rounded-xl">
+          <CalendarCheck className="w-4 h-4 mr-1.5" />
+          {t("Check In", "打卡")}
+        </Button>
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel} className="rounded-xl">
+            {t("Cancel", "取消")}
+          </Button>
+        )}
+      </div>
+    </motion.form>
+  );
+}
+
 export default function MissionControl() {
-  const { state, addLog, completeGoal } = useGoalCtx();
+  const { state, addLog, addCheckin, completeGoal } = useGoalCtx();
   const { lang, toggle, t } = useLangCtx();
   const { days, hours, minutes, seconds, progressPercent, isLowTime, isExpired } = useCountdown(state.startTime, state.deadline);
 
@@ -91,6 +162,7 @@ export default function MissionControl() {
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * quotes.length));
   const [newLogText, setNewLogText] = useState("");
   const [isLogging, setIsLogging] = useState(false);
+  const [showCheckinForm, setShowCheckinForm] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -115,8 +187,30 @@ export default function MissionControl() {
     setIsLogging(false);
   };
 
-  const remainingPct = Math.max(0, 100 - progressPercent);
+  // --- Check-in logic ---
+  const todayStr = getDateStr(new Date());
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = getDateStr(yesterday);
 
+  const todayCheckin = state.checkins.find((c) => c.date === todayStr);
+  const yesterdayCheckin = state.checkins.find((c) => c.date === yesterdayStr);
+
+  // Only warn about yesterday if the goal started before yesterday midnight
+  const goalStartDay = state.startTime ? getDateStr(new Date(state.startTime)) : todayStr;
+  const goalStartedBeforeYesterday = goalStartDay < yesterdayStr;
+  const yesterdayMissed = goalStartedBeforeYesterday && (!yesterdayCheckin || yesterdayCheckin.hours < 12);
+  const yesterdayShortfall = yesterdayCheckin ? Math.max(0, 12 - yesterdayCheckin.hours) : 12;
+
+  const streak = calcStreak(state.checkins);
+  const totalHours = state.checkins.reduce((sum, c) => sum + c.hours, 0);
+
+  const handleCheckin = (h: number, note: string) => {
+    addCheckin(todayStr, h, note || undefined);
+    setShowCheckinForm(false);
+  };
+
+  const remainingPct = Math.max(0, 100 - progressPercent);
   const timeLabels = lang === 'zh'
     ? ['天', '时', '分', '秒']
     : ['days', 'hrs', 'min', 'sec'];
@@ -138,7 +232,7 @@ export default function MissionControl() {
       <div className="absolute top-10 right-0 w-80 h-80 bg-primary/8 rounded-full blur-3xl pointer-events-none translate-x-1/3" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/15 rounded-full blur-3xl pointer-events-none -translate-x-1/4" />
 
-      <main className="max-w-2xl mx-auto px-4 md:px-6 py-8 space-y-8 relative z-10">
+      <main className="max-w-2xl mx-auto px-4 md:px-6 py-8 space-y-6 relative z-10">
 
         {/* Top bar */}
         <div className="flex items-center justify-between">
@@ -154,7 +248,6 @@ export default function MissionControl() {
           <button
             onClick={toggle}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-border text-xs font-bold text-muted-foreground hover:text-foreground transition-colors shadow-xs"
-            data-testid="button-lang-toggle-mission"
           >
             <Languages className="w-3.5 h-3.5" />
             {lang === 'en' ? '中文' : 'English'}
@@ -197,13 +290,129 @@ export default function MissionControl() {
             <CountdownBlock value={seconds} label={timeLabels[3]} isLow={isLowTime} />
           </div>
 
-          {/* Progress bar */}
           <div className="h-2.5 w-full rounded-full bg-border/40 overflow-hidden">
             <motion.div
               className={`h-full rounded-full transition-colors duration-500 ${isLowTime ? 'bg-destructive' : 'bg-primary'}`}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.5 }}
             />
+          </div>
+        </div>
+
+        {/* ===== DAILY CHECK-IN CARD ===== */}
+        <div className="bg-white rounded-3xl border border-border/50 shadow-sm overflow-hidden">
+          {/* Stats row */}
+          <div className="flex divide-x divide-border/40">
+            <div className="flex-1 flex flex-col items-center py-4 gap-1">
+              <div className="flex items-center gap-1.5">
+                <Flame className={`w-5 h-5 ${streak > 0 ? 'text-orange-500' : 'text-muted-foreground/40'}`} />
+                <span className="text-2xl font-black tabular-nums text-foreground">{streak}</span>
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("Day Streak", "连续打卡")}
+              </span>
+            </div>
+            <div className="flex-1 flex flex-col items-center py-4 gap-1">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-5 h-5 text-primary" />
+                <span className="text-2xl font-black tabular-nums text-foreground">{totalHours}</span>
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("Total Hours", "累计小时")}
+              </span>
+            </div>
+            <div className="flex-1 flex flex-col items-center py-4 gap-1">
+              <div className="flex items-center gap-1.5">
+                <CalendarCheck className={`w-5 h-5 ${todayCheckin ? 'text-green-500' : 'text-muted-foreground/40'}`} />
+                <span className="text-2xl font-black tabular-nums text-foreground">
+                  {todayCheckin ? `${todayCheckin.hours}h` : '--'}
+                </span>
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("Today", "今日")}
+              </span>
+            </div>
+          </div>
+
+          {/* Yesterday missed warning */}
+          <AnimatePresence>
+            {yesterdayMissed && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mx-4 mb-3 mt-1 bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 items-start"
+              >
+                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-0.5">
+                  <p className="text-sm font-black text-red-700">
+                    {yesterdayCheckin
+                      ? t(`Yesterday: only ${yesterdayCheckin.hours}h / 12h target`, `昨天只干了${yesterdayCheckin.hours}小时，差${yesterdayShortfall}小时`)
+                      : t("Yesterday: no check-in recorded", "昨天没有打卡记录")
+                    }
+                  </p>
+                  <p className="text-xs text-red-500 font-medium">
+                    {t(
+                      `You owe ${yesterdayShortfall}h. Make today count double.`,
+                      `欠了${yesterdayShortfall}小时。今天把它补回来。`
+                    )}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Check-in action area */}
+          <div className="px-4 pb-4">
+            <AnimatePresence mode="wait">
+              {todayCheckin && !showCheckinForm ? (
+                <motion.div
+                  key="done"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center justify-between bg-green-50 border border-green-200 rounded-2xl px-4 py-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <div>
+                      <p className="font-black text-green-800 text-sm">
+                        {t(`Today: ${todayCheckin.hours}h logged`, `今天已打卡：${todayCheckin.hours}小时`)}
+                      </p>
+                      {todayCheckin.note && (
+                        <p className="text-xs text-green-600 mt-0.5">{todayCheckin.note}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowCheckinForm(true)}
+                    className="text-xs text-green-600 underline font-bold hover:text-green-800"
+                  >
+                    {t("Edit", "修改")}
+                  </button>
+                </motion.div>
+              ) : !showCheckinForm ? (
+                <motion.button
+                  key="cta"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  onClick={() => setShowCheckinForm(true)}
+                  className="w-full py-4 text-base font-black border-2 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 rounded-2xl text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2"
+                  data-testid="button-checkin"
+                >
+                  <CalendarCheck className="w-5 h-5" />
+                  {t("Check in today's hours", "打卡今日工时")}
+                </motion.button>
+              ) : (
+                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <CheckinForm
+                    defaultHours={todayCheckin?.hours ?? 12}
+                    onSubmit={handleCheckin}
+                    onCancel={() => setShowCheckinForm(false)}
+                    t={t}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
