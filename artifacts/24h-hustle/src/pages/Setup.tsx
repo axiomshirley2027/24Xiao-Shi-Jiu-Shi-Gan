@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useGoal } from "@/hooks/useGoal";
-import { useLangCtx } from "@/App";
+import { useGoalCtx } from "@/hooks/useGoal";
+import { useLangCtx } from "@/context/LangContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -23,7 +23,7 @@ const FUNNY_PLACEHOLDERS_ZH = [
 ];
 
 export default function Setup() {
-  const { setGoal } = useGoal();
+  const { setGoal } = useGoalCtx();
   const { lang, toggle, t } = useLangCtx();
   const [goal, setGoalInput] = useState("");
 

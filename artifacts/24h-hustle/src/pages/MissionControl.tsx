@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useGoal } from "@/hooks/useGoal";
+import { useGoalCtx } from "@/hooks/useGoal";
 import { useCountdown } from "@/hooks/useCountdown";
-import { useLangCtx } from "@/App";
+import { useLangCtx } from "@/context/LangContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -83,7 +83,7 @@ function CountdownBlock({ value, label, isLow }: { value: number; label: string;
 }
 
 export default function MissionControl() {
-  const { state, addLog, completeGoal } = useGoal();
+  const { state, addLog, completeGoal } = useGoalCtx();
   const { lang, toggle, t } = useLangCtx();
   const { days, hours, minutes, seconds, progressPercent, isLowTime, isExpired } = useCountdown(state.startTime, state.deadline);
 

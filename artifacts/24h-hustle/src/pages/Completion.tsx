@@ -1,5 +1,5 @@
-import { useGoal } from "@/hooks/useGoal";
-import { useLangCtx } from "@/App";
+import { useGoalCtx } from "@/hooks/useGoal";
+import { useLangCtx } from "@/context/LangContext";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, PartyPopper, HeartCrack } from "lucide-react";
 import { motion } from "framer-motion";
@@ -20,7 +20,7 @@ function formatDuration(ms: number, lang: string) {
 }
 
 export default function Completion() {
-  const { state, resetGoal } = useGoal();
+  const { state, resetGoal } = useGoalCtx();
   const { lang, t } = useLangCtx();
   const isAbandoned = state.status === 'abandoned';
 
