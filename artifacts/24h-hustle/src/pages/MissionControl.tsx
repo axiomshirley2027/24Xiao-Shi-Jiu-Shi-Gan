@@ -497,6 +497,72 @@ export default function MissionControl() {
           </div>
         </div>
 
+        {/* ── Time Budget ── */}
+        {state.estimatedHours != null && (() => {
+          const availableHoursLeft = daysLeft * 12;
+          const donePercent = Math.min(100, Math.round((totalHours / state.estimatedHours) * 100));
+          const remaining = Math.max(0, state.estimatedHours - totalHours);
+          const urgent = availableHoursLeft > 0 && remaining > availableHoursLeft;
+          const done = donePercent >= 100;
+
+          return (
+            <div className={`bg-white rounded-3xl p-5 border shadow-sm space-y-4 ${urgent ? 'border-red-300' : 'border-border/50'}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" />
+                  {t("Time Budget", "时间预算")}
+                </span>
+                {done
+                  ? <span className="text-xs font-black text-green-600 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">✓ {t("Goal reached!", "目标达成！")}</span>
+                  : urgent
+                    ? <span className="text-xs font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200 animate-pulse">⚠ {t("Behind pace!", "落后进度！")}</span>
+                    : <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">{donePercent}% {t("done", "完成")}</span>
+                }
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-1.5">
+                <div className="h-3 w-full rounded-full bg-border/40 overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${done ? 'bg-green-500' : urgent ? 'bg-red-500' : 'bg-primary'}`}
+                    animate={{ width: `${donePercent}%` }}
+                    transition={{ duration: 0.6 }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs font-bold text-muted-foreground">
+                  <span>{totalHours}h {t("logged", "已打卡")}</span>
+                  <span>{state.estimatedHours}h {t("estimated", "预估")}</span>
+                </div>
+              </div>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-background rounded-2xl py-3 px-2 border border-border/40">
+                  <div className="text-xl font-black tabular-nums">{remaining > 0 ? remaining.toFixed(1) : 0}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t("hrs left", "剩余小时")}</div>
+                </div>
+                <div className={`rounded-2xl py-3 px-2 border ${urgent ? 'bg-red-50 border-red-200' : 'bg-background border-border/40'}`}>
+                  <div className={`text-xl font-black tabular-nums ${urgent ? 'text-red-600' : ''}`}>{availableHoursLeft}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t("hrs available", "可用小时")}</div>
+                </div>
+                <div className="bg-background rounded-2xl py-3 px-2 border border-border/40">
+                  <div className="text-xl font-black tabular-nums">{daysLeft > 0 && remaining > 0 ? (remaining / daysLeft).toFixed(1) : '—'}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t("hrs/day needed", "每天需投入")}</div>
+                </div>
+              </div>
+
+              {urgent && !done && (
+                <p className="text-xs font-bold text-red-600 text-center">
+                  {t(
+                    `You need ${remaining.toFixed(1)}h more but only have ${availableHoursLeft}h left. Time to hustle harder.`,
+                    `还需 ${remaining.toFixed(1)} 小时，但只剩 ${availableHoursLeft} 小时可用。要加速了！`
+                  )}
+                </p>
+              )}
+            </div>
+          );
+        })()}
+
         {/* ── Daily check-in ── */}
         <div className="bg-white rounded-3xl border border-border/50 shadow-sm overflow-hidden">
           <div className="flex divide-x divide-border/40">

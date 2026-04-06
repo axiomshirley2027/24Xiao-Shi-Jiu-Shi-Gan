@@ -4,7 +4,7 @@ import { useLangCtx } from "@/context/LangContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Rocket, CalendarDays, Languages, ChevronDown, ShieldAlert, Bell, Plus, X } from "lucide-react";
+import { Rocket, CalendarDays, Languages, ChevronDown, ShieldAlert, Bell, Plus, X, Clock } from "lucide-react";
 
 const FUNNY_PLACEHOLDERS_EN = [
   "Write a novel (no, seriously, this time)",
@@ -35,6 +35,7 @@ export default function Setup() {
   const { lang, toggle, t } = useLangCtx();
   const [goal, setGoalInput] = useState("");
   const [stake, setStake] = useState("");
+  const [estimatedHours, setEstimatedHours] = useState<string>("");
   const [reminderTimes, setReminderTimes] = useState<string[]>(["09:00"]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -61,9 +62,11 @@ export default function Setup() {
     if (!goal.trim() || !deadline) return;
     const deadlineTs = new Date(deadline).getTime();
     if (deadlineTs <= Date.now()) return;
+    const estH = estimatedHours ? parseFloat(estimatedHours) : undefined;
     setGoal(goal.trim(), deadlineTs, {
       stake: stake.trim() || undefined,
       reminderTimes: notificationsEnabled ? reminderTimes.filter(Boolean) : undefined,
+      estimatedHours: estH && estH > 0 ? estH : undefined,
     });
   };
 
@@ -157,6 +160,51 @@ export default function Setup() {
                   required
                 />
               </div>
+            </div>
+
+            {/* Estimated hours */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="w-4 h-4" />
+                {t("How many hours will this take? (optional)", "预计需要多少小时？（可选）")}
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 flex items-center bg-background border-2 border-border/60 rounded-2xl px-5 py-3 focus-within:border-primary transition-colors">
+                  <input
+                    type="number"
+                    min="1"
+                    max="10000"
+                    step="0.5"
+                    value={estimatedHours}
+                    onChange={(e) => setEstimatedHours(e.target.value)}
+                    placeholder={t("e.g. 40", "例如：40")}
+                    className="bg-transparent text-base font-semibold text-foreground outline-none w-full [color-scheme:light]"
+                  />
+                  <span className="text-sm font-bold text-muted-foreground ml-2 shrink-0">{t("hrs", "小时")}</span>
+                </div>
+                {estimatedHours && (() => {
+                  const daysTotal = deadline ? Math.max(1, Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)) : 1;
+                  const available = daysTotal * 12;
+                  const est = parseFloat(estimatedHours);
+                  const pct = Math.min(100, Math.round((est / available) * 100));
+                  const tight = pct > 80;
+                  return (
+                    <div className={`text-xs font-bold px-3 py-2 rounded-xl shrink-0 ${tight ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                      {pct}% {t("of budget", "占用可用时间")}
+                    </div>
+                  );
+                })()}
+              </div>
+              <p className="text-xs text-muted-foreground/60 font-medium">
+                {(() => {
+                  const daysTotal = deadline ? Math.max(1, Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)) : 7;
+                  const available = daysTotal * 12;
+                  return t(
+                    `${daysTotal}d × 12 usable hrs/day = ${available}h available (excludes sleep)`,
+                    `${daysTotal}天 × 12小时/天 = ${available}小时可用（扣除睡眠）`
+                  );
+                })()}
+              </p>
             </div>
 
             {/* Advanced options toggle */}
