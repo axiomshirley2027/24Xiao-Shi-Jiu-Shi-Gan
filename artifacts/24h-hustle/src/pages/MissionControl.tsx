@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, Plus, CheckCircle2, Flag, Zap, Languages, Flame, Clock, AlertTriangle, CalendarCheck } from "lucide-react";
+import { Target, Plus, CheckCircle2, Flag, Zap, Languages, Flame, Clock, AlertTriangle, CalendarCheck, Pencil } from "lucide-react";
 
 const QUOTES_EN = [
   "Your couch is not going anywhere. The deadline is.",
@@ -154,7 +154,7 @@ function CheckinForm({ defaultHours, onSubmit, onCancel, t }: CheckinFormProps) 
 }
 
 export default function MissionControl() {
-  const { state, addLog, addCheckin, completeGoal } = useGoalCtx();
+  const { state, addLog, addCheckin, completeGoal, resetGoal } = useGoalCtx();
   const { lang, toggle, t } = useLangCtx();
   const { days, hours, minutes, seconds, progressPercent, isLowTime, isExpired } = useCountdown(state.startTime, state.deadline);
 
@@ -256,13 +256,52 @@ export default function MissionControl() {
 
         {/* Goal display */}
         <div className="bg-white rounded-3xl p-6 border border-border/50 shadow-sm space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <Target className="w-4 h-4 text-primary" />
-            {t("Your Mission", "你的任务")}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <Target className="w-4 h-4 text-primary" />
+              {t("Your Mission", "你的任务")}
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/60 hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-primary/5">
+                  <Pencil className="w-3.5 h-3.5" />
+                  {t("Edit", "修改")}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-white rounded-3xl border border-border/60 shadow-xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-xl font-black text-foreground">
+                    {t("Go back and edit?", "返回修改目标？")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-base text-muted-foreground font-medium leading-relaxed">
+                    {t(
+                      "This will reset your current timer and check-ins. Your progress notes will be lost. Sure?",
+                      "这将重置你的计时器和打卡记录。进展笔记也会丢失。确定吗？"
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2">
+                  <AlertDialogCancel className="rounded-2xl font-bold border-border/60 hover:bg-background">
+                    {t("Never mind", "算了")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={resetGoal}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-2xl"
+                  >
+                    {t("Yes, let me fix it", "是的，让我改一下")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           <h2 className="text-2xl md:text-3xl font-black text-foreground leading-snug break-words">
             {state.goal}
           </h2>
+          {state.deadline && (
+            <p className="text-xs text-muted-foreground font-mono">
+              {t("Deadline:", "截止：")} {new Date(state.deadline).toLocaleString()}
+            </p>
+          )}
         </div>
 
         {/* Countdown */}
