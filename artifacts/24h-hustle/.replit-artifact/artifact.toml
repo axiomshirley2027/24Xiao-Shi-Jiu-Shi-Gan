@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "24小时就是干"
+version = "1.0.0"
+id = "artifacts/24h-hustle"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18550
+
+[services.development]
+run = "pnpm --filter @workspace/24h-hustle run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/24h-hustle", "run", "build" ]
+publicDir = "artifacts/24h-hustle/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18550"
+BASE_PATH = "/"

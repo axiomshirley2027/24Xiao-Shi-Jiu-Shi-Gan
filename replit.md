@@ -4,6 +4,15 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Artifacts
+
+### 24小时就是干 (`artifacts/24h-hustle`)
+- Personal focus/urgency app — users declare one high-priority goal, set a deadline date, and the app tracks countdown + motivates them
+- Pure frontend, no backend — all state stored in localStorage via `useGoal` hook
+- Pages: Setup (declare goal + set deadline date), MissionControl (countdown + quotes + progress log), Completion (summary)
+- Features: real-time countdown, rotating Chinese motivational quotes every 10s, progress logging, abandon confirmation dialog
+- Theme: deep navy/black with electric orange primary and crimson destructive — intense, urgent vibe
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
