@@ -4,7 +4,7 @@ import { useLangCtx } from "@/context/LangContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Rocket, CalendarDays, Languages, ChevronDown, ShieldAlert, Bell } from "lucide-react";
+import { Rocket, CalendarDays, Languages, ChevronDown, ShieldAlert, Bell, Plus, X } from "lucide-react";
 
 const FUNNY_PLACEHOLDERS_EN = [
   "Write a novel (no, seriously, this time)",
@@ -35,7 +35,7 @@ export default function Setup() {
   const { lang, toggle, t } = useLangCtx();
   const [goal, setGoalInput] = useState("");
   const [stake, setStake] = useState("");
-  const [reminderTime, setReminderTime] = useState("09:00");
+  const [reminderTimes, setReminderTimes] = useState<string[]>(["09:00"]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [notifStatus, setNotifStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
@@ -63,7 +63,7 @@ export default function Setup() {
     if (deadlineTs <= Date.now()) return;
     setGoal(goal.trim(), deadlineTs, {
       stake: stake.trim() || undefined,
-      reminderTime: notificationsEnabled ? reminderTime : undefined,
+      reminderTimes: notificationsEnabled ? reminderTimes.filter(Boolean) : undefined,
     });
   };
 
@@ -201,41 +201,65 @@ export default function Setup() {
                     </p>
                   </div>
 
-                  {/* Daily reminder */}
-                  <div className="space-y-2 p-4 rounded-2xl bg-blue-50 border border-blue-200">
-                    <label className="text-sm font-black text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Bell className="w-4 h-4" />
-                      {t("Daily reminder", "每日提醒")}
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="time"
-                        value={reminderTime}
-                        onChange={(e) => setReminderTime(e.target.value)}
-                        className="bg-white border-2 border-blue-200 focus:border-blue-400 rounded-xl px-3 py-2 font-bold text-foreground outline-none [color-scheme:light] cursor-pointer"
-                        disabled={!notificationsEnabled}
-                      />
-                      {notifStatus === 'idle' && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleEnableNotifications}
-                          className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 rounded-xl text-sm font-bold"
-                        >
-                          {t("Enable", "开启通知")}
-                        </Button>
-                      )}
-                      {notifStatus === 'granted' && (
-                        <span className="text-xs font-bold text-green-600">✓ {t("Enabled!", "已开启！")}</span>
-                      )}
-                      {notifStatus === 'denied' && (
-                        <span className="text-xs font-bold text-red-500">{t("Blocked by browser", "浏览器已屏蔽")}</span>
-                      )}
+                  {/* Daily reminder — multiple times */}
+                  <div className="space-y-3 p-4 rounded-2xl bg-blue-50 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-black text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Bell className="w-4 h-4" />
+                        {t("Daily reminders", "每日提醒")}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {notifStatus === 'idle' && (
+                          <Button type="button" variant="outline" onClick={handleEnableNotifications} className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 rounded-xl text-xs font-bold h-7 px-2">
+                            {t("Enable", "开启")}
+                          </Button>
+                        )}
+                        {notifStatus === 'granted' && <span className="text-xs font-bold text-green-600">✓ {t("On", "已开")}</span>}
+                        {notifStatus === 'denied' && <span className="text-xs font-bold text-red-500">{t("Blocked", "已屏蔽")}</span>}
+                      </div>
                     </div>
+
+                    <div className="space-y-2">
+                      {reminderTimes.map((time, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input
+                            type="time"
+                            value={time}
+                            onChange={(e) => {
+                              const next = [...reminderTimes];
+                              next[i] = e.target.value;
+                              setReminderTimes(next);
+                            }}
+                            disabled={!notificationsEnabled}
+                            className="flex-1 bg-white border-2 border-blue-200 focus:border-blue-400 rounded-xl px-3 py-2 font-bold text-foreground outline-none [color-scheme:light] cursor-pointer disabled:opacity-50"
+                          />
+                          {reminderTimes.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setReminderTimes(reminderTimes.filter((_, j) => j !== i))}
+                              className="p-1.5 rounded-lg text-blue-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setReminderTimes([...reminderTimes, "12:00"])}
+                      disabled={!notificationsEnabled || reminderTimes.length >= 6}
+                      className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {t("Add another time", "添加提醒时间")}
+                    </button>
+
                     <p className="text-xs text-blue-500 font-medium">
                       {t(
-                        "Browser will remind you to check in at this time daily (only works while browser is open).",
-                        "浏览器会在每天此时提醒你打卡（需要浏览器保持开启）。"
+                        "Browser notifies you at each time daily (requires browser open).",
+                        "每天到点提醒（需要浏览器保持开启）。"
                       )}
                     </p>
                   </div>

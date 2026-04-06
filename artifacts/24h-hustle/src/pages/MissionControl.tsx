@@ -335,27 +335,32 @@ export default function MissionControl() {
     prevExpired.current = isExpired;
   }, [isExpired, state.status, completeGoal]);
 
-  /* browser notifications */
+  /* browser notifications — check all reminder times */
   useEffect(() => {
-    if (!state.reminderTime || Notification.permission !== 'granted') return;
+    if (!state.reminderTimes?.length || Notification.permission !== 'granted') return;
     const check = () => {
       const now = new Date();
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const todayStr = getDateStr(now);
-      const lastNotified = localStorage.getItem('24h_hustle_last_notified');
-      if (currentTime === state.reminderTime && lastNotified !== todayStr) {
-        localStorage.setItem('24h_hustle_last_notified', todayStr);
-        const todayCheckin = state.checkins.find((c) => c.date === todayStr);
-        const body = todayCheckin
-          ? t(`You've logged ${todayCheckin.hours}h today. Keep pushing!`, `今天已记录${todayCheckin.hours}小时，继续加油！`)
-          : t(`Time to check in! Goal: "${state.goal}"`, `打卡时间到！目标：「${state.goal}」`);
-        new Notification(t('⚡ Lock In Reminder', '⚡ 打卡提醒'), { body });
+      const notifiedKey = `24h_hustle_notified_${todayStr}`;
+      const notifiedToday: string[] = JSON.parse(localStorage.getItem(notifiedKey) ?? '[]');
+
+      for (const rt of state.reminderTimes) {
+        if (currentTime === rt && !notifiedToday.includes(rt)) {
+          notifiedToday.push(rt);
+          localStorage.setItem(notifiedKey, JSON.stringify(notifiedToday));
+          const todayCheckin = state.checkins.find((c) => c.date === todayStr);
+          const body = todayCheckin
+            ? t(`You've logged ${todayCheckin.hours}h today. Keep pushing!`, `今天已记录${todayCheckin.hours}小时，继续加油！`)
+            : t(`Time to check in! Goal: "${state.goal}"`, `打卡时间到！目标：「${state.goal}」`);
+          new Notification(t('⚡ Lock In Reminder', '⚡ 打卡提醒'), { body });
+        }
       }
     };
     const id = setInterval(check, 60000);
     check();
     return () => clearInterval(id);
-  }, [state.reminderTime, state.goal, state.checkins, t]);
+  }, [state.reminderTimes, state.goal, state.checkins, t]);
 
   /* check-in helpers */
   const todayStr = getDateStr(new Date());

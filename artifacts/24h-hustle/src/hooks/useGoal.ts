@@ -20,14 +20,14 @@ export interface GoalState {
   checkins: DailyCheckin[];
   stake: string | null;
   distractionCount: number;
-  reminderTime: string | null;
+  reminderTimes: string[];
   pomodoroCount: number;
   status: 'none' | 'active' | 'completed' | 'abandoned';
 }
 
 export interface GoalCtxValue {
   state: GoalState;
-  setGoal: (goal: string, deadline: number, opts?: { stake?: string; reminderTime?: string }) => void;
+  setGoal: (goal: string, deadline: number, opts?: { stake?: string; reminderTimes?: string[] }) => void;
   addLog: (note: string) => void;
   addCheckin: (date: string, hours: number, note?: string) => void;
   addDistraction: () => void;
@@ -46,7 +46,7 @@ const defaultState: GoalState = {
   checkins: [],
   stake: null,
   distractionCount: 0,
-  reminderTime: null,
+  reminderTimes: [],
   pomodoroCount: 0,
   status: 'none',
 };
@@ -108,14 +108,14 @@ export function useGoal(): GoalCtxValue {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
   }, [state]);
 
-  const setGoal = useCallback((goal: string, deadline: number, opts?: { stake?: string; reminderTime?: string }) => {
+  const setGoal = useCallback((goal: string, deadline: number, opts?: { stake?: string; reminderTimes?: string[] }) => {
     setState({
       ...defaultState,
       goal,
       deadline,
       startTime: Date.now(),
       stake: opts?.stake ?? null,
-      reminderTime: opts?.reminderTime ?? null,
+      reminderTimes: opts?.reminderTimes ?? [],
       status: 'active',
     });
   }, []);
