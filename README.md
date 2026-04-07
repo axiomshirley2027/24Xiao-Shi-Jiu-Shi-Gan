@@ -61,4 +61,7 @@ Found a bug or have a suggestion? Email [axiomshirley2027@gmail.com](mailto:axio
 
 ## License
 
-MIT — free to use, fork, and build on.
+Copyright (c) 2025 axiomshirley2027. All Rights Reserved.
+
+Unauthorized copying, distribution, or modification of this code is strictly prohibited.
+For licensing inquiries: [axiomshirley2027@gmail.com](mailto:axiomshirley2027@gmail.com)
